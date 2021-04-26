@@ -2,6 +2,43 @@ namespace SpriteKind {
     export const ghost = SpriteKind.create()
     export const camera = SpriteKind.create()
     export const collider = SpriteKind.create()
+    export const texts = SpriteKind.create()
+}
+function createObstacle () {
+    obstacle = sprites.createProjectileFromSide(img`
+        . . . f f f f f f f . . . . f 1 
+        . . f f f f f f 1 1 f . . f f f 
+        . f f f f f f f f f 1 f . f f . 
+        . f f f f f f f f f f 1 f . . . 
+        f f f f f f f f f f f f 1 f . . 
+        f f f f f f f f f f f f 1 f . . 
+        f f f f f f f f f f f f 1 f . . 
+        f f f f f f f f f f f f f f f . 
+        f f f f f f f f f f f f f f f f 
+        f f f f f f f f f f f f f f f f 
+        . f f f 1 f . f f f f f f f f f 
+        . . f f f . . . f f f f f f f . 
+        . . . . . . . . . f f f f f . . 
+        . . . . f f 1 1 . . . . . . . . 
+        . . . f f f f f . . . . . . . . 
+        . . . f f f . . . . . . . . . . 
+        `, 0, 100)
+    tmp = randint(0, obstacles.length)
+    obstacle.setImage(obstacles[tmp])
+    obstacle.setFlag(SpriteFlag.RelativeToCamera, true)
+    obstacle.y = car.y - 110
+    obstacle.x = car.x
+    obstacle.z = 0
+    obstacle.lifespan = 3000
+}
+function checkCollider (theSprite: Sprite, spriteHeight: number) {
+    if (theSprite.x >= car.x - 10 && theSprite.x <= car.x + 10) {
+        if (theSprite.y + spriteHeight >= car.y && theSprite.y <= car.y + 10) {
+            theSprite.destroy()
+            return true
+        }
+    }
+    return false
 }
 function initCar () {
     car = sprites.create(img`
@@ -54,15 +91,54 @@ function initCamera () {
 sprites.onDestroyed(SpriteKind.Food, function (sprite) {
     fuelAvailable = 0
 })
+function createFuel () {
+    fuelAvailable = 1
+    fuel = sprites.create(img`
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . f f f . . . . . . . . . 
+        . . . f . . . f . . . . . . . . 
+        . . . f f f f f . f f f . . . . 
+        . . . f 7 e e e f f . . . . . . 
+        . . . f 7 e e e e c f . . . . . 
+        . . . f 7 1 1 1 e c f . . . . . 
+        . . . f 7 1 f f e c f . . . . . 
+        . . . f 7 1 f e e c f . c c . . 
+        . . . f 7 1 1 e e c f c c c c . 
+        . . . f 7 1 f e e c f c c c c . 
+        . . . f 7 1 f e e c f c c c . . 
+        . . . . f f f f f f c c . . . . 
+        `, SpriteKind.Food)
+    fuel.vy = 100
+    fuel.setFlag(SpriteFlag.RelativeToCamera, true)
+    fuel.y = car.y - 110
+    fuel.x = randint(40, 120)
+    fuel.z = 0
+    fuel.lifespan = 3000
+}
 function initStatusbar () {
     statusbar = statusbars.create(20, 4, StatusBarKind.Energy)
     statusbar.max = 350
     statusbar.value = 350
     statusbar.setBarBorder(0, 15)
     statusbar.setStatusBarFlag(StatusBarFlag.SmoothTransition, true)
-    statusbar.setLabel("F", 15)
     statusbar.positionDirection(CollisionDirection.Top)
     statusbar.positionDirection(CollisionDirection.Right)
+    statusbar.setOffsetPadding(50, 3)
+    label_Fuel = sprites.create(img`
+        b f f f f f f f f f f f f f f f f b 
+        f 1 1 1 f 1 f f 1 f 1 1 1 f 1 f f f 
+        f 1 f f f 1 f f 1 f 1 f f f 1 f f f 
+        f 1 1 1 f 1 f f 1 f 1 1 f f 1 f f f 
+        f 1 f f f 1 f f 1 f 1 f f f 1 f f f 
+        f 1 f f f f 1 1 f f 1 1 1 f 1 1 1 f 
+        b f f f f f f f f f f f f f f f f b 
+        `, SpriteKind.texts)
+    label_Fuel.setPosition(148, 103)
+    label_Fuel.setFlag(SpriteFlag.RelativeToCamera, true)
+    fuelAvailable = 0
 }
 function initObstacles () {
     obstacles = [img`
@@ -116,6 +192,23 @@ function initObstacles () {
         . . . . 2 f f 2 2 f f 2 c c . . 
         . . . . 2 2 2 2 2 2 2 2 c c . . 
         . . . . 5 f f f f f f 5 c c c . 
+        `, img`
+        . . 2 f f f f f f 2 c c c . . . 
+        . . 2 2 2 2 2 2 2 2 c c . . . . 
+        . . 2 f f 2 2 f f 2 c c . . . . 
+        . . 2 2 2 2 2 2 2 2 c c . . . . 
+        . . 2 2 f f f f 2 2 c c c . . . 
+        . . 2 f f f f f f 2 c c c c . . 
+        . . 2 1 c 2 2 2 f 2 c c c c . . 
+        . . 2 f 1 2 2 2 f 2 c c c c . . 
+        . . 2 f 1 2 2 2 f 2 c c c c . . 
+        . . 2 f f f f f f 2 c c c . . . 
+        . . 2 1 f f f f f 2 c c . . . . 
+        . . 2 1 f f f f 2 2 c c . . . . 
+        . . 2 1 2 2 2 2 2 2 c c . . . . 
+        . . 2 2 2 2 2 2 2 2 c c . . . . 
+        . . . 2 2 2 2 2 2 c c . . . . . 
+        . . . . 2 2 2 2 c . . . . . . . 
         `]
     otherCars = [
     img`
@@ -254,21 +347,40 @@ statusbars.onStatusReached(StatusBarKind.Energy, statusbars.StatusComparison.LTE
     statusbar.setColor(5, 2)
 })
 let othercar: Sprite = null
-let tmp = 0
-let obstacle: Sprite = null
-let fuel: Sprite = null
 let otherCars: Image[] = []
-let obstacles: Image[] = []
+let label_Fuel: Sprite = null
 let statusbar: StatusBarSprite = null
+let fuel: Sprite = null
+let fuelAvailable = 0
 let cameraPerson: Sprite = null
 let car: Sprite = null
-let fuelAvailable = 0
+let obstacles: Image[] = []
+let tmp = 0
+let obstacle: Sprite = null
 tiles.setTilemap(tilemap`level1`)
 initCar()
 initStatusbar()
 initCamera()
 initObstacles()
-fuelAvailable = 0
+info.setLife(3)
+game.onUpdate(function () {
+    for (let value of sprites.allOfKind(SpriteKind.Enemy)) {
+        if (checkCollider(value, value.height) == true) {
+            timer.throttle("loseLife", 1000, function () {
+                value.destroy(effects.ashes, 500)
+                car.startEffect(effects.fire, 500)
+                info.changeLifeBy(-1)
+            })
+        }
+    }
+})
+game.onUpdate(function () {
+    if (fuelAvailable == 1) {
+        if (checkCollider(fuel, 16) == true) {
+            statusbar.value += 125
+        }
+    }
+})
 game.onUpdate(function () {
     if (cameraPerson.y < 60) {
         cameraPerson.y += 380
@@ -280,73 +392,27 @@ game.onUpdate(function () {
     }
 })
 game.onUpdate(function () {
-    if (info.score() > 0 && info.score() % 10 == 0) {
-        timer.throttle("checkScore", 10000, function () {
-            fuelAvailable = 1
-            fuel = sprites.create(img`
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . . . . . . . . . . . . . 
-                . . . . f f f . . . . . . . . . 
-                . . . f . . . f . . . . . . . . 
-                . . . f f f f f . f f f . . . . 
-                . . . f 7 e e e f f . . . . . . 
-                . . . f 7 e e e e c f . . . . . 
-                . . . f 7 1 1 1 e c f . . . . . 
-                . . . f 7 1 f f e c f . . . . . 
-                . . . f 7 1 f e e c f . c c . . 
-                . . . f 7 1 1 e e c f c c c c . 
-                . . . f 7 1 f e e c f c c c c . 
-                . . . f 7 1 f e e c f c c c . . 
-                . . . . f f f f f f c c . . . . 
-                `, SpriteKind.Food)
-            fuel.vy = 100
-            fuel.setFlag(SpriteFlag.RelativeToCamera, true)
-            fuel.y = car.y - 110
-            fuel.x = randint(40, 120)
-            fuel.z = 0
-            fuel.lifespan = 3000
-        })
+    for (let value of sprites.allOfKind(SpriteKind.Projectile)) {
+        if (checkCollider(value, value.height) == true) {
+            timer.throttle("loseScore", 1000, function () {
+                value.destroy(effects.ashes, 500)
+                car.startEffect(effects.fire, 500)
+                info.changeScoreBy(-2)
+                statusbar.value += -10
+            })
+        }
     }
 })
 game.onUpdate(function () {
-    if (fuelAvailable == 1) {
-        if (fuel.x >= car.x - 10 && fuel.x <= car.x + 10) {
-            if (car.y <= fuel.y + 16) {
-                statusbar.value += 75
-                fuel.destroy()
-            }
-        }
+    if (info.score() > 0 && info.score() % 10 == 0) {
+        timer.throttle("checkScore", 10000, function () {
+            createFuel()
+        })
     }
 })
 game.onUpdateInterval(5000, function () {
     if (info.score() > 0) {
-        obstacle = sprites.createProjectileFromSide(img`
-            . . . f f f f f f f . . . . f 1 
-            . . f f f f f f 1 1 f . . f f f 
-            . f f f f f f f f f 1 f . f f . 
-            . f f f f f f f f f f 1 f . . . 
-            f f f f f f f f f f f f 1 f . . 
-            f f f f f f f f f f f f 1 f . . 
-            f f f f f f f f f f f f 1 f . . 
-            f f f f f f f f f f f f f f f . 
-            f f f f f f f f f f f f f f f f 
-            f f f f f f f f f f f f f f f f 
-            . f f f 1 f . f f f f f f f f f 
-            . . f f f . . . f f f f f f f . 
-            . . . . . . . . . f f f f f . . 
-            . . . . f f 1 1 . . . . . . . . 
-            . . . f f f f f . . . . . . . . 
-            . . . f f f . . . . . . . . . . 
-            `, 0, 100)
-        tmp = randint(0, 2)
-        obstacle.setImage(obstacles[tmp])
-        obstacle.setFlag(SpriteFlag.RelativeToCamera, true)
-        obstacle.y = car.y - 110
-        obstacle.x = car.x
-        obstacle.z = 0
-        obstacle.lifespan = 3000
+        createObstacle()
     }
 })
 // hardest : game update 800
