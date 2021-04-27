@@ -92,18 +92,20 @@ sprites.onDestroyed(SpriteKind.Food, function (sprite) {
     fuelAvailable = 0
 })
 function getBGScrollSpeed () {
-    return getCurrentLevel() * 75 / 2
+    tmp = getCurrentLevel()
+    textLevel.setText(convertToText(Math.floor(tmp * 80 / 2)))
+    return tmp * 80 / 2
 }
 function setScrollSpeeds () {
     if (fuelAvailable == 1) {
         fuel.vy = getBGScrollSpeed()
-        cameraPerson.vy = getBGScrollSpeed() * -1
-        for (let value of sprites.allOfKind(SpriteKind.Projectile)) {
-            value.vy = getBGScrollSpeed()
-        }
-        for (let value of sprites.allOfKind(SpriteKind.Enemy)) {
-            value.vy = randint(getBGScrollSpeed() / 2 + 5, getBGScrollSpeed() / 2 - 5)
-        }
+    }
+    cameraPerson.vy = getBGScrollSpeed() * -1
+    for (let value of sprites.allOfKind(SpriteKind.Projectile)) {
+        value.vy = getBGScrollSpeed()
+    }
+    for (let value2 of sprites.allOfKind(SpriteKind.Enemy)) {
+        value2.vy = randint(getBGScrollSpeed() / 2 + 5, getBGScrollSpeed() / 2 - 5)
     }
 }
 function createFuel () {
@@ -135,10 +137,14 @@ function createFuel () {
 }
 function initScore () {
     info.setScore(0)
-    textLevel = textsprite.create("lvl 0", 0, 15)
+    textLevel = textsprite.create("0", 0, 15)
     textLevel.setOutline(1, 1)
     textLevel.setFlag(SpriteFlag.RelativeToCamera, true)
-    textLevel.setPosition(16, 16)
+    textLevel.setPosition(16, 29)
+    textKMH = textsprite.create("KM/H", 0, 15)
+    textKMH.setOutline(1, 1)
+    textKMH.setFlag(SpriteFlag.RelativeToCamera, true)
+    textKMH.setPosition(16, 17)
 }
 function initStatusbar () {
     statusbar = statusbars.create(25, 5, StatusBarKind.Energy)
@@ -156,9 +162,7 @@ function initStatusbar () {
     fuelAvailable = 0
 }
 function getCurrentLevel () {
-    tmp = Math.max(Math.floor(info.score() / 15) + 1 - malus, 1)
-    textLevel.setText("lvl" + tmp)
-    return tmp
+    return Math.max(Math.floor(info.score() / 15) + 1 - malus, 1)
 }
 function initObstacles () {
     obstacles = [img`
@@ -370,8 +374,9 @@ let othercar: Sprite = null
 let otherCars: Image[] = []
 let textFuel: TextSprite = null
 let statusbar: StatusBarSprite = null
-let textLevel: TextSprite = null
+let textKMH: TextSprite = null
 let fuel: Sprite = null
+let textLevel: TextSprite = null
 let fuelAvailable = 0
 let cameraPerson: Sprite = null
 let car: Sprite = null
@@ -389,27 +394,13 @@ initObstacles()
 info.setLife(3)
 malus = 0
 game.onUpdate(function () {
-    if (info.score() % 50 == 0 && info.score() > 0) {
-        timer.throttle("checkScore", 10000, function () {
-            music.powerUp.play()
-            info.changeLifeBy(1)
-        })
+    if (cameraPerson.y < 60) {
+        cameraPerson.y += 380
     }
-})
-game.onUpdate(function () {
-    setScrollSpeeds()
-})
-game.onUpdate(function () {
-    for (let value of sprites.allOfKind(SpriteKind.Projectile)) {
-        if (checkCollider(value, value.height) == true) {
-            timer.throttle("loseScore", 1000, function () {
-                value.destroy(effects.ashes, 500)
-                car.startEffect(effects.fire, 500)
-                music.smallCrash.play()
-                info.changeScoreBy(-2)
-                statusbar.value += -10
-            })
-        }
+    if (car.x < 40) {
+        car.x = 40
+    } else if (car.x > 120) {
+        car.x = 120
     }
 })
 game.onUpdate(function () {
@@ -421,13 +412,27 @@ game.onUpdate(function () {
     }
 })
 game.onUpdate(function () {
-    if (cameraPerson.y < 60) {
-        cameraPerson.y += 380
+    setScrollSpeeds()
+})
+game.onUpdate(function () {
+    for (let value3 of sprites.allOfKind(SpriteKind.Enemy)) {
+        if (checkCollider(value3, value3.height) == true) {
+            timer.throttle("loseLife", 1000, function () {
+                value3.destroy(effects.disintegrate, 1000)
+                car.startEffect(effects.fire, 500)
+                music.bigCrash.play()
+                malus += 1
+                setScrollSpeeds()
+                info.changeLifeBy(-1)
+            })
+        }
     }
-    if (car.x < 40) {
-        car.x = 40
-    } else if (car.x > 120) {
-        car.x = 120
+})
+game.onUpdate(function () {
+    for (let value4 of sprites.allOfKind(SpriteKind.Enemy)) {
+        if (value4.y > scene.screenHeight() + 10) {
+            value4.destroy()
+        }
     }
 })
 game.onUpdate(function () {
@@ -439,22 +444,23 @@ game.onUpdate(function () {
     }
 })
 game.onUpdate(function () {
-    for (let value of sprites.allOfKind(SpriteKind.Enemy)) {
-        if (checkCollider(value, value.height) == true) {
-            timer.throttle("loseLife", 1000, function () {
-                value.destroy(effects.disintegrate, 1000)
-                car.startEffect(effects.fire, 500)
-                music.bigCrash.play()
-                malus += 1
-                info.changeLifeBy(-1)
-            })
-        }
+    if (info.score() % 50 == 0 && info.score() > 0) {
+        timer.throttle("checkScore", 10000, function () {
+            music.powerUp.play()
+            info.changeLifeBy(1)
+        })
     }
 })
 game.onUpdate(function () {
-    for (let value of sprites.allOfKind(SpriteKind.Enemy)) {
-        if (value.y > scene.screenHeight() + 10) {
-            value.destroy()
+    for (let value5 of sprites.allOfKind(SpriteKind.Projectile)) {
+        if (checkCollider(value5, value5.height) == true) {
+            timer.throttle("loseScore", 1000, function () {
+                value5.destroy(effects.ashes, 500)
+                car.startEffect(effects.fire, 500)
+                music.smallCrash.play()
+                info.changeScoreBy(-2)
+                statusbar.value += -10
+            })
         }
     }
 })
