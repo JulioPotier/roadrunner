@@ -29,7 +29,7 @@ function createObstacle () {
     obstacle.y = car.y - 110
     obstacle.x = car.x
     obstacle.z = 0
-    obstacle.lifespan = 3000
+    obstacle.lifespan = 3500
 }
 function checkCollider (theSprite: Sprite, spriteHeight: number) {
     if (theSprite.x >= car.x - 10 && theSprite.x <= car.x + 10) {
@@ -378,6 +378,7 @@ let car: Sprite = null
 let obstacles: Image[] = []
 let tmp = 0
 let obstacle: Sprite = null
+game.splash("Road Runner", "Evite les obstacles et fait le plein !")
 tiles.setTilemap(tilemap`level1`)
 initScore()
 initCar()
@@ -386,8 +387,33 @@ initCamera()
 initObstacles()
 info.setLife(3)
 game.onUpdate(function () {
+    setScrollSpeeds()
+})
+game.onUpdate(function () {
+    if (info.score() % 50 == 0 && info.score() > 0) {
+        timer.throttle("checkScore", 10000, function () {
+            music.powerUp.play()
+            info.changeLifeBy(1)
+        })
+    }
+})
+game.onUpdate(function () {
+    for (let value of sprites.allOfKind(SpriteKind.Projectile)) {
+        if (checkCollider(value, value.height) == true) {
+            timer.throttle("loseScore", 1000, function () {
+                value.destroy(effects.ashes, 500)
+                car.startEffect(effects.fire, 500)
+                music.smallCrash.play()
+                info.changeScoreBy(-2)
+                statusbar.value += -10
+            })
+        }
+    }
+})
+game.onUpdate(function () {
     if (fuelAvailable == 1) {
         if (checkCollider(fuel, 16) == true) {
+            music.beamUp.play()
             statusbar.value += 125
         }
     }
@@ -403,15 +429,11 @@ game.onUpdate(function () {
     }
 })
 game.onUpdate(function () {
-    for (let value of sprites.allOfKind(SpriteKind.Projectile)) {
-        if (checkCollider(value, value.height) == true) {
-            timer.throttle("loseScore", 1000, function () {
-                value.destroy(effects.ashes, 500)
-                car.startEffect(effects.fire, 500)
-                info.changeScoreBy(-2)
-                statusbar.value += -10
-            })
-        }
+    let currentLevel = 0
+    if (info.score() > 0 && info.score() % (4 + currentLevel) == 0) {
+        timer.throttle("checkFuel", 8000, function () {
+            createFuel()
+        })
     }
 })
 game.onUpdate(function () {
@@ -420,17 +442,10 @@ game.onUpdate(function () {
             timer.throttle("loseLife", 1000, function () {
                 value.destroy(effects.ashes, 500)
                 car.startEffect(effects.fire, 500)
+                music.bigCrash.play()
                 info.changeLifeBy(-1)
             })
         }
-    }
-})
-game.onUpdate(function () {
-    let currentLevel = 0
-    if (info.score() > 0 && info.score() % (5 + currentLevel) == 0) {
-        timer.throttle("checkScore", 8000, function () {
-            createFuel()
-        })
     }
 })
 game.onUpdate(function () {
@@ -489,9 +504,6 @@ game.onUpdateInterval(5000, function () {
         createObstacle()
     }
 })
-game.onUpdateInterval(100, function () {
+game.onUpdateInterval(125, function () {
     statusbar.value += -1
-})
-game.onUpdateInterval(100, function () {
-    setScrollSpeeds()
 })
