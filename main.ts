@@ -156,7 +156,7 @@ function initStatusbar () {
     fuelAvailable = 0
 }
 function getCurrentLevel () {
-    tmp = Math.floor(info.score() / 15) + 1
+    tmp = Math.max(Math.floor(info.score() / 15) + 1 - malus, 1)
     textLevel.setText("lvl" + tmp)
     return tmp
 }
@@ -378,6 +378,7 @@ let car: Sprite = null
 let obstacles: Image[] = []
 let tmp = 0
 let obstacle: Sprite = null
+let malus = 0
 game.splash("Road Runner", "Evite les obstacles et fait le plein !")
 tiles.setTilemap(tilemap`level1`)
 initScore()
@@ -386,9 +387,7 @@ initStatusbar()
 initCamera()
 initObstacles()
 info.setLife(3)
-game.onUpdate(function () {
-    setScrollSpeeds()
-})
+malus = 0
 game.onUpdate(function () {
     if (info.score() % 50 == 0 && info.score() > 0) {
         timer.throttle("checkScore", 10000, function () {
@@ -396,6 +395,9 @@ game.onUpdate(function () {
             info.changeLifeBy(1)
         })
     }
+})
+game.onUpdate(function () {
+    setScrollSpeeds()
 })
 game.onUpdate(function () {
     for (let value of sprites.allOfKind(SpriteKind.Projectile)) {
@@ -440,9 +442,10 @@ game.onUpdate(function () {
     for (let value of sprites.allOfKind(SpriteKind.Enemy)) {
         if (checkCollider(value, value.height) == true) {
             timer.throttle("loseLife", 1000, function () {
-                value.destroy(effects.ashes, 500)
+                value.destroy(effects.disintegrate, 1000)
                 car.startEffect(effects.fire, 500)
                 music.bigCrash.play()
+                malus += 1
                 info.changeLifeBy(-1)
             })
         }
